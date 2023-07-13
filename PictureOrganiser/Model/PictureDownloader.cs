@@ -36,19 +36,19 @@ namespace PictureOrganiser.Model
             System.Console.WriteLine("");
 
             var downloadTasks = new List<Task>();
+            var remaining = config.Count;
 
-            DownloadedOrder = 1;
+            DownloadedOrder = 0;
 
-            while (DownloadedOrder < config.Count && stoppingToken.IsCancellationRequested == false)
+            while (remaining > 0 && stoppingToken.IsCancellationRequested == false)
             {
                 try
                 {
+                    remaining--;
+
                     await Semaphore.WaitAsync();
 
                     downloadTasks.Add(DownLoadImage(url, config));
-
-                    OnDownloadComplete?.Invoke(DownloadedOrder, config.Count);
-
                 }
                 catch (TaskCanceledException e)
                 {
@@ -84,14 +84,18 @@ namespace PictureOrganiser.Model
 
                 if (!hasSameImage)
                 {
-                    File.WriteAllBytes($"{config.SavePath}/{DownloadedOrder++}.png", imageBytes);
+                    File.WriteAllBytes($"{config.SavePath}/{++DownloadedOrder}.png", imageBytes);
+
+                    OnDownloadComplete?.Invoke(DownloadedOrder, config.Count);
+
+                    Semaphore.Release();
                 }
                 else
                 {
-                    // If any same image exists, do not increase 
+                    // If any same image exists, do not increase DownloadedOrder
+                    await DownLoadImage(url, config);
+                    return;
                 }
-
-                Semaphore.Release();
             }
         }
     }

@@ -45,8 +45,11 @@ namespace PictureOrganiser
 
             downloader.OnDownloadComplete += (int downloadedImageCount, int totalCount) =>
             {
-                System.Console.CursorLeft = 0;
-                System.Console.Write($"Progress: {downloadedImageCount}/{totalCount}");
+                lock(downloader)
+                {
+                    System.Console.CursorLeft = 0;
+                    System.Console.Write($"Progress: {downloadedImageCount}/{totalCount}");
+                }
             };
 
             Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
@@ -66,7 +69,7 @@ namespace PictureOrganiser
                 }
                 catch (Exception ex)
                 {
-                    var d = 0;
+                    System.Console.WriteLine("Cancel Error : " + ex.Message);
                 }
             };
 
@@ -127,9 +130,5 @@ namespace PictureOrganiser
             return System.Console.ReadLine();
         }
 
-        static void Start()
-        {
-
-        }
     }
 }
